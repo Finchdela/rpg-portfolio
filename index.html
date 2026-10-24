@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farras Ijlal Nashir | 16-Bit Retro RPG Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --rpg-blue: #0b1a48;
+      --rpg-blue-dark: #050b24;
+      --rpg-gold: #ffcc00;
+      --rpg-border: #e0e0e0;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      background-color: #080c18;
+      color: #ffffff;
+      image-rendering: pixelated;
+    }
+
+    /* Classic SNES / Final Fantasy Window Box */
+    .retro-box {
+      background: linear-gradient(180deg, #10256b 0%, #060e2b 100%);
+      border: 4px solid #ffffff;
+      box-shadow: 
+        0 0 0 2px #000000,
+        inset 0 0 0 2px #000033,
+        inset 4px 4px 0 0 rgba(255,255,255,0.2),
+        4px 4px 0 0 rgba(0,0,0,0.7);
+      border-radius: 6px;
+    }
+
+    .retro-btn {
+      background: #182a72;
+      border: 3px solid #f7fafc;
+      box-shadow: 0 4px 0 #070e28;
+      transition: all 0.08s ease;
+      cursor: pointer;
+    }
+
+    .retro-btn:hover {
+      background: #2540a8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #070e28;
+    }
+
+    .retro-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #070e28;
+    }
+
+    .retro-btn.active {
+      background: #c67d0a;
+      border-color: #ffe680;
+      color: #ffffff;
+    }
+
+    /* Scanline overlay effect */
+    .scanlines {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.03),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.03)
+      );
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Pixel bar */
+    .pixel-bar-bg {
+      background: #111827;
+      border: 2px solid #ffffff;
+      padding: 2px;
+    }
+
+    .pixel-bar-fill {
+      height: 12px;
+      transition: width 0.3s ease;
+    }
+
+    /* Cursor pointer indicator */
+    .hand-cursor {
+      display: inline-block;
+      animation: bounce 0.6s infinite alternate;
+    }
+
+    @keyframes bounce {
+      from { transform: translateX(0); }
+      to { transform: translateX(5px); }
+    }
+
+    /* Pixel avatar */
+    .avatar-frame {
+      border: 4px solid #ffcc00;
+      box-shadow: inset 0 0 0 2px #000, 0 0 0 2px #000;
+      background: #0d1b3e;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-xs md:text-sm p-3 md:p-6 flex flex-col items-center justify-start relative">
+  <!-- Scanline effect overlay -->
+  <div class="fixed inset-0 scanlines z-50"></div>
+
+  <!-- Audio Controls & Header Bar -->
+  <header class="w-full max-w-4xl flex items-center justify-between mb-4 z-10">
+    <div class="flex items-center gap-2">
+      <span class="text-yellow-400 text-lg md:text-xl">⚔️</span>
+      <div>
+        <h1 class="text-sm md:text-base font-bold text-yellow-300 tracking-wider">HERO ARCHIVES: DATA REALM</h1>
+        <p class="text-[10px] md:text-xs text-blue-300">SYSTEM: SNES-16BIT // KERNEL 2026</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="soundToggle" onclick="toggleAudio()" class="retro-btn px-3 py-1.5 text-[10px] md:text-xs flex items-center gap-1">
+        <span id="soundIcon">🔊</span> <span id="soundText">SFX: ON</span>
+      </button>
+      <button onclick="openEditorModal()" class="retro-btn px-3 py-1.5 text-[10px] md:text-xs bg-amber-700 hover:bg-amber-600 border-amber-300">
+        ⚙️ EDIT DATA
+      </button>
+    </div>
+  </header>
+
+  <!-- Top Character Overview Banner -->
+  <section class="w-full max-w-4xl retro-box p-4 md:p-5 mb-4 z-10">
+    <div class="flex flex-col md:flex-row gap-5 items-center md:items-start">
+      <!-- Pixel Character Avatar -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="avatar-frame w-24 h-24 md:w-28 md:h-28 flex items-center justify-center relative overflow-hidden">
+          <!-- 16-bit Pixel Art Wizard SVG -->
+          <svg viewBox="0 0 16 16" class="w-20 h-20 md:w-24 md:h-24" style="shape-rendering: crispEdges;">
+            <!-- Hat -->
+            <rect x="6" y="1" width="4" height="2" fill="#3b82f6"/>
+            <rect x="5" y="3" width="6" height="2" fill="#2563eb"/>
+            <rect x="3" y="5" width="10" height="2" fill="#1d4ed8"/>
+            <rect x="7" y="4" width="2" height="1" fill="#facc15"/>
+            <!-- Face -->
+            <rect x="5" y="7" width="6" height="4" fill="#fed7aa"/>
+            <rect x="6" y="8" width="1" height="1" fill="#1e293b"/>
+            <rect x="9" y="8" width="1" height="1" fill="#1e293b"/>
+            <rect x="7" y="10" width="2" height="1" fill="#f87171"/>
+            <!-- Robe / Armor -->
+            <rect x="4" y="11" width="8" height="4" fill="#1e3a8a"/>
+            <rect x="6" y="11" width="4" height="4" fill="#38bdf8"/>
+            <rect x="3" y="12" width="2" height="3" fill="#60a5fa"/>
+            <rect x="11" y="12" width="2" height="3" fill="#60a5fa"/>
+            <!-- Data Staff / Crystal -->
+            <rect x="13" y="7" width="2" height="2" fill="#a855f7"/>
+            <rect x="13" y="9" width="1" height="6" fill="#78350f"/>
+            <!-- Aura sparkles -->
+            <rect x="2" y="3" width="1" height="1" fill="#fbbf24"/>
+            <rect x="13" y="4" width="1" height="1" fill="#38bdf8"/>
+          </svg>
+        </div>
+        <span class="text-[10px] text-yellow-300 bg-blue-950 px-2 py-0.5 border border-yellow-500 rounded">LVL 22 DATA MAGE</span>
+      </div>
+
+      <!-- Character Vital Info -->
+      <div class="flex-1 w-full">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-blue-800 pb-2 mb-3">
+          <div>
+            <h2 id="charName" class="text-base md:text-xl font-bold text-yellow-300">FARRAS IJLAL NASHIR</h2>
+            <p id="charClass" class="text-xs text-cyan-300 mt-1">CLASS: DATA ALCHEMIST & RESEARCHER</p>
+          </div>
+          <div class="text-[10px] md:text-xs text-gray-300 mt-2 md:mt-0 bg-blue-900/60 p-2 border border-blue-700">
+            GUILD: <span id="charGuild" class="text-white font-bold">UIN RADEN MAS SAID SURAKARTA</span>
+          </div>
+        </div>
+
+        <!-- HP & MP Gauges -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <div>
+            <div class="flex justify-between text-[10px] mb-1">
+              <span class="text-red-400 font-bold">HP (ENERGY):</span>
+              <span class="text-red-300">950 / 950</span>
+            </div>
+            <div class="pixel-bar-bg">
+              <div class="pixel-bar-fill bg-gradient-to-r from-red-600 to-rose-400 w-full"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px] mb-1">
+              <span class="text-cyan-400 font-bold">MP (LOGIC/DATA):</span>
+              <span class="text-cyan-300">880 / 880</span>
+            </div>
+            <div class="pixel-bar-bg">
+              <div class="pixel-bar-fill bg-gradient-to-r from-cyan-600 to-blue-400 w-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dialogue Bubble -->
+        <div class="bg-black/40 border border-blue-400/50 p-2 text-[10px] md:text-xs text-blue-100 flex items-center gap-2">
+          <span class="text-yellow-400 text-sm">💬</span>
+          <span id="statusQuote">"Menjelajahi samudra data, mengelompokkan pola tersembunyi, dan meracik wawasan menjadi solusi nyata."</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation Menu Tabs -->
+  <nav class="w-full max-w-4xl grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4 z-10">
+    <button onclick="switchTab('stats')" id="tab-stats" class="retro-btn active py-2 text-center text-[10px] md:text-xs font-bold">
+      📊 STATUS
+    </button>
+    <button onclick="switchTab('quests')" id="tab-quests" class="retro-btn py-2 text-center text-[10px] md:text-xs font-bold">
+      📜 QUEST LOG
+    </button>
+    <button onclick="switchTab('inventory')" id="tab-inventory" class="retro-btn py-2 text-center text-[10px] md:text-xs font-bold">
+      🎒 INVENTORY
+    </button>
+    <button onclick="switchTab('battle')" id="tab-battle" class="retro-btn py-2 text-center text-[10px] md:text-xs font-bold text-amber-300">
+      ⚔️ ARENA
+    </button>
+    <button onclick="switchTab('summon')" id="tab-summon" class="retro-btn py-2 text-center text-[10px] md:text-xs font-bold">
+      📫 SUMMON
+    </button>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="w-full max-w-4xl z-10 flex-1">
+    
+    <!-- TAB 1: STATUS / ATTRIBUTES -->
+    <section id="panel-stats" class="retro-box p-5">
+      <div class="flex items-center gap-2 border-b-2 border-blue-800 pb-2 mb-4">
+        <span class="text-yellow-400">★</span>
+        <h3 class="text-sm md:text-base font-bold text-yellow-300">CHARACTER ATTRIBUTES & RADAR</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Core RPG Stats -->
+        <div class="space-y-3">
+          <h4 class="text-xs text-blue-300 border-b border-blue-900 pb-1 font-bold">CORE METRICS</h4>
+          
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-yellow-300">INT (Data Science & ML):</span>
+              <span class="font-bold text-cyan-300">92 / 100</span>
+            </div>
+            <div class="pixel-bar-bg"><div class="pixel-bar-fill bg-cyan-500" style="width: 92%"></div></div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-yellow-300">WIS (Statistical Analysis):</span>
+              <span class="font-bold text-blue-300">88 / 100</span>
+            </div>
+            <div class="pixel-bar-bg"><div class="pixel-bar-fill bg-blue-500" style="width: 88%"></div></div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-yellow-300">AGI (Data Cleaning & Wrangling):</span>
+              <span class="font-bold text-green-300">85 / 100</span>
+            </div>
+            <div class="pixel-bar-bg"><div class="pixel-bar-fill bg-emerald-500" style="width: 85%"></div></div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-yellow-300">CHA (Insight & Presentation):</span>
+              <span class="font-bold text-purple-300">82 / 100</span>
+            </div>
+            <div class="pixel-bar-bg"><div class="pixel-bar-fill bg-purple-500" style="width: 82%"></div></div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="text-yellow-300">VIT (Research Persistence):</span>
+              <span class="font-bold text-rose-300">95 / 100</span>
+            </div>
+            <div class="pixel-bar-bg"><div class="pixel-bar-fill bg-rose-500" style="width: 95%"></div></div>
+          </div>
+        </div>
+
+        <!-- Special Traits & Passives -->
+        <div class="space-y-3">
+          <h4 class="text-xs text-blue-300 border-b border-blue-900 pb-1 font-bold">PASSIVE ABILITIES</h4>
+          <div class="space-y-2 text-[10px] md:text-xs">
+            <div class="bg-blue-950/70 p-2.5 border border-blue-700 rounded">
+              <div class="text-yellow-300 font-bold mb-1">✨ K-Means Master</div>
+              <p class="text-gray-300 leading-relaxed">Mampu mengelompokkan data spasial & demografi menjadi klaster yang kohesif dan actionable.</p>
+            </div>
+            <div class="bg-blue-950/70 p-2.5 border border-blue-700 rounded">
+              <div class="text-yellow-300 font-bold mb-1">🔮 Outlier Purifier</div>
+              <p class="text-gray-300 leading-relaxed">+30% efisiensi saat membersihkan missing value dan mendeteksi anomali pada dataset kotor.</p>
+            </div>
+            <div class="bg-blue-950/70 p-2.5 border border-blue-700 rounded">
+              <div class="text-yellow-300 font-bold mb-1">🤝 Community Enchanter</div>
+              <p class="text-gray-300 leading-relaxed">Berpengalaman dalam pengabdian masyarakat (sociopreneur & pelatihan teknologi aplikatif).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: QUEST LOG (PROJECTS & RESEARCH) -->
+    <section id="panel-quests" class="retro-box p-5 hidden">
+      <div class="flex items-center justify-between border-b-2 border-blue-800 pb-2 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-yellow-400">📜</span>
+          <h3 class="text-sm md:text-base font-bold text-yellow-300">QUEST LOG: RESEARCH & PROJECTS</h3>
+        </div>
+        <span class="text-[10px] text-green-300 bg-green-950/80 px-2 py-1 border border-green-600">ALL COMPLETED [S-RANK]</span>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Quest 1: Health Workers Clustering -->
+        <article class="bg-blue-950/80 border-2 border-yellow-500/80 p-3 md:p-4 rounded relative">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-1 mb-2">
+            <h4 class="text-xs md:text-sm font-bold text-yellow-300 flex items-center gap-2">
+              <span class="text-green-400">✔</span> MAIN QUEST: CLUSTERING NAKES JAWA TIMUR
+            </h4>
+            <span class="text-[9px] md:text-[10px] text-cyan-300 bg-blue-900 px-2 py-0.5 border border-blue-600">
+              PUB: ICDSOS / STIS
+            </span>
+          </div>
+          <p class="text-[10px] md:text-xs text-gray-200 mb-3 leading-relaxed">
+            <strong>Deskripsi Quest:</strong> Melakukan analisis klasterisasi Kabupaten/Kota di Provinsi Jawa Timur berdasarkan distribusi jumlah tenaga kesehatan (Nakes) menggunakan algoritma <em>K-Means Clustering</em>.
+          </p>
+          <div class="bg-black/50 p-2 text-[10px] border border-blue-700/60 mb-2">
+            <span class="text-yellow-400 font-bold">Reward/Impact:</span> Menyajikan pemetaan daerah prioritas alokasi fasilitas kesehatan untuk mendukung perumusan kebijakan berbasis data.
+          </div>
+          <div class="flex flex-wrap gap-1 text-[9px]">
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">K-Means</span>
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Python</span>
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Machine Learning</span>
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Statistika Resmi</span>
+          </div>
+        </article>
+
+        <!-- Quest 2: Community Service & Ecoprint -->
+        <article class="bg-blue-950/80 border border-blue-700 p-3 md:p-4 rounded">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-1 mb-2">
+            <h4 class="text-xs md:text-sm font-bold text-yellow-300 flex items-center gap-2">
+              <span class="text-green-400">✔</span> GUILD QUEST: PENGABDIAN MASYARAKAT
+            </h4>
+            <span class="text-[9px] md:text-[10px] text-cyan-300 bg-blue-900 px-2 py-0.5 border border-blue-600">
+              COMMUNITY IMPACT
+            </span>
+          </div>
+          <p class="text-[10px] md:text-xs text-gray-200 mb-3 leading-relaxed">
+            <strong>Deskripsi Quest:</strong> Menginisiasi pelatihan dan pemberdayaan ekonomi kreatif lokal (pelatihan tekstil ramah lingkungan ecoprint) bersama tim akademis UIN Raden Mas Said Surakarta.
+          </p>
+          <div class="bg-black/50 p-2 text-[10px] border border-blue-700/60 mb-2">
+            <span class="text-yellow-400 font-bold">Reward/Impact:</span> Mengembangkan kemandirian wirausaha masyarakat dan sinergi kampus dengan lingkungan sosial.
+          </div>
+          <div class="flex flex-wrap gap-1 text-[9px]">
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Community Dev</span>
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Leadership</span>
+            <span class="bg-blue-900 text-blue-200 px-1.5 py-0.5 border border-blue-500">Empowerment</span>
+          </div>
+        </article>
+
+        <!-- Quest 3: Add Custom Quest Card -->
+        <div class="border-2 border-dashed border-blue-700 p-3 text-center rounded bg-blue-950/30">
+          <p class="text-[10px] text-blue-300 mb-2">Punya proyek atau publikasi lain yang ingin ditampilkan di Quest Log?</p>
+          <button onclick="openEditorModal()" class="retro-btn px-3 py-1 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-300">
+            ➕ TAMBAH QUEST DARI LINKEDIN / CV
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: INVENTORY (TECH STACK & TOOLS) -->
+    <section id="panel-inventory" class="retro-box p-5 hidden">
+      <div class="flex items-center gap-2 border-b-2 border-blue-800 pb-2 mb-4">
+        <span class="text-yellow-400">🎒</span>
+        <h3 class="text-sm md:text-base font-bold text-yellow-300">EQUIPMENT & ARTIFACT INVENTORY</h3>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <!-- Item 1 -->
+        <div class="bg-blue-950/80 border-2 border-yellow-400/70 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Python Spellbook', 'Bahasa pemrograman utama untuk manipulasi data, automasi, dan pemodelan machine learning.')">
+          <div class="text-2xl mb-1">🐍</div>
+          <div class="text-[11px] font-bold text-yellow-300">Python 3.x</div>
+          <div class="text-[9px] text-cyan-300">Mythic Catalyst</div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Scikit-Learn Orb', 'Library andalan untuk algoritma clustering (K-Means), klasifikasi, dan regresi.')">
+          <div class="text-2xl mb-1">🔮</div>
+          <div class="text-[11px] font-bold text-yellow-300">Scikit-Learn</div>
+          <div class="text-[9px] text-cyan-300">Cluster Relic</div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Pandas & NumPy Shield', 'Pertahanan utama dalam mengolah dataframe raksasa dan operasi matriks numerik.')">
+          <div class="text-2xl mb-1">🐼</div>
+          <div class="text-[11px] font-bold text-yellow-300">Pandas / NumPy</div>
+          <div class="text-[9px] text-cyan-300">Heavy Armor</div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('SQL Runestone', 'Query sakti untuk mengambil dan memfilter data dari basis data relasional.')">
+          <div class="text-2xl mb-1">🗄️</div>
+          <div class="text-[11px] font-bold text-yellow-300">SQL Queries</div>
+          <div class="text-[9px] text-cyan-300">Ancient Rune</div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Matplotlib / Seaborn', 'Lensa kristal untuk visualisasi grafik, korelasi variabel, dan sebaran klaster.')">
+          <div class="text-2xl mb-1">📈</div>
+          <div class="text-[11px] font-bold text-yellow-300">Data Viz</div>
+          <div class="text-[9px] text-cyan-300">Vision Scope</div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Jupyter Grimoire', 'Buku riset interaktif untuk eksperimen kode, dokumentasi, dan visualisasi cepat.')">
+          <div class="text-2xl mb-1">📓</div>
+          <div class="text-[11px] font-bold text-yellow-300">Jupyter Lab</div>
+          <div class="text-[9px] text-cyan-300">Research Grimoire</div>
+        </div>
+
+        <!-- Item 7 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Git Version Beacon', 'Menyimpan checkpoint dimensi waktu kode agar terhindar dari bug mematikan.')">
+          <div class="text-2xl mb-1">🐙</div>
+          <div class="text-[11px] font-bold text-yellow-300">Git / GitHub</div>
+          <div class="text-[9px] text-cyan-300">Time Compass</div>
+        </div>
+
+        <!-- Item 8 -->
+        <div class="bg-blue-950/80 border border-blue-600 p-3 text-center rounded hover:scale-105 transition-transform cursor-pointer" onclick="inspectItem('Figma & UI Prototype', 'Alat sketsa antarmuka dan visual storytelling untuk mempresentasikan hasil analisis.')">
+          <div class="text-2xl mb-1">🎨</div>
+          <div class="text-[11px] font-bold text-yellow-300">UI / Design</div>
+          <div class="text-[9px] text-cyan-300">Artisan Brush</div>
+        </div>
+      </div>
+
+      <!-- Item Inspection Box -->
+      <div id="itemDetailBox" class="mt-4 bg-black/60 border border-yellow-500/80 p-3 rounded">
+        <div class="text-xs text-yellow-300 font-bold mb-1" id="itemDetailTitle">🔍 Klik salah satu item untuk membaca detail relic!</div>
+        <div class="text-[10px] md:text-xs text-gray-300" id="itemDetailDesc">Setiap item mewakili perkakas teknologi yang dikuasai Farras dalam bertualang di dunia data.</div>
+      </div>
+    </section>
+
+    <!-- TAB 4: BATTLE MINI-GAME (EASTER EGG) -->
+    <section id="panel-battle" class="retro-box p-5 hidden">
+      <div class="flex items-center justify-between border-b-2 border-blue-800 pb-2 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-red-400">⚔️</span>
+          <h3 class="text-sm md:text-base font-bold text-yellow-300">BATTLE ARENA: VS DIRTY RAW DATA</h3>
+        </div>
+        <span class="text-[10px] text-red-300 bg-red-950 px-2 py-0.5 border border-red-600">BOSS FIGHT</span>
+      </div>
+
+      <!-- Arena Screen -->
+      <div class="bg-gradient-to-b from-indigo-950 via-slate-900 to-black p-4 rounded border-2 border-white mb-4">
+        <!-- Enemy Side -->
+        <div class="flex flex-col items-end mb-6">
+          <div class="bg-black/70 border border-red-500 px-3 py-1.5 rounded mb-2 w-56">
+            <div class="flex justify-between text-[10px] text-red-400 font-bold">
+              <span>WILD DATA CHAOS</span>
+              <span id="enemyHpText">HP: 100%</span>
+            </div>
+            <div class="pixel-bar-bg mt-1">
+              <div id="enemyHpBar" class="pixel-bar-fill bg-red-500" style="width: 100%;"></div>
+            </div>
+          </div>
+          <!-- Enemy Sprite -->
+          <div id="enemySprite" class="w-16 h-16 flex items-center justify-center text-4xl animate-pulse">
+            👾
+          </div>
+        </div>
+
+        <!-- Player Side -->
+        <div class="flex items-start gap-4">
+          <div class="text-3xl">🧙‍♂️</div>
+          <div class="bg-black/70 border border-cyan-500 px-3 py-1.5 rounded w-56">
+            <div class="flex justify-between text-[10px] text-cyan-300 font-bold">
+              <span>FARRAS (DATA MAGE)</span>
+              <span>HP: 950</span>
+            </div>
+            <div class="pixel-bar-bg mt-1">
+              <div class="pixel-bar-fill bg-cyan-400" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Battle Dialogue Text Box -->
+      <div class="bg-blue-950 border-2 border-white p-3 mb-3 min-h-[50px] flex items-center">
+        <p id="battleLog" class="text-[10px] md:text-xs text-yellow-200">
+          ⚠️ Seekor Monster "Missing Values & Unstructured Data" muncul! Pilih mantra Anda:
+        </p>
+      </div>
+
+      <!-- Battle Commands -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <button onclick="battleAction('clean')" class="retro-btn py-2.5 text-[10px] md:text-xs text-yellow-300 font-bold">
+          🧹 Clean Data
+        </button>
+        <button onclick="battleAction('cluster')" class="retro-btn py-2.5 text-[10px] md:text-xs text-cyan-300 font-bold">
+          🔮 K-Means Blast
+        </button>
+        <button onclick="battleAction('pipeline')" class="retro-btn py-2.5 text-[10px] md:text-xs text-green-300 font-bold">
+          ⚡ Build Pipeline
+        </button>
+        <button onclick="battleAction('insight')" class="retro-btn py-2.5 text-[10px] md:text-xs text-purple-300 font-bold">
+          📊 Cast Insight
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 5: SUMMON / CONTACT -->
+    <section id="panel-summon" class="retro-box p-5 hidden">
+      <div class="flex items-center gap-2 border-b-2 border-blue-800 pb-2 mb-4">
+        <span class="text-yellow-400">📫</span>
+        <h3 class="text-sm md:text-base font-bold text-yellow-300">SUMMONING SHRINE (CONTACT & SOCIALS)</h3>
+      </div>
+
+      <p class="text-[10px] md:text-xs text-gray-200 mb-5 leading-relaxed">
+        Ingin merekrut Farras untuk ekspedisi Data Science baru, kolaborasi riset, atau proyek Machine Learning? Gunakan gulungan pemanggil di bawah ini:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- LinkedIn Portal -->
+        <a href="https://www.linkedin.com/in/farras-ijlal-nashir-4ba6012a2" target="_blank" rel="noopener noreferrer" class="retro-btn p-4 flex items-center gap-3 no-underline text-white block hover:border-yellow-400">
+          <div class="text-2xl">💼</div>
+          <div>
+            <div class="text-xs font-bold text-yellow-300">LinkedIn Guild Portal</div>
+            <div class="text-[9px] text-blue-200 mt-1">/in/farras-ijlal-nashir-4ba6012a2</div>
+          </div>
+        </a>
+
+        <!-- Academic / Research Record -->
+        <a href="https://stis.ac.id" target="_blank" rel="noopener noreferrer" class="retro-btn p-4 flex items-center gap-3 no-underline text-white block hover:border-yellow-400">
+          <div class="text-2xl">🎓</div>
+          <div>
+            <div class="text-xs font-bold text-yellow-300">Academic & STIS Publication</div>
+            <div class="text-[9px] text-blue-200 mt-1">Prosiding Konferensi Sains Data</div>
+          </div>
+        </a>
+
+        <!-- Direct Message / Email -->
+        <div class="retro-btn p-4 flex items-center gap-3 cursor-pointer" onclick="copyContact('farras')">
+          <div class="text-2xl">📜</div>
+          <div>
+            <div class="text-xs font-bold text-yellow-300">Direct Message / Telegram / Mail</div>
+            <div class="text-[9px] text-green-300 mt-1" id="copyNotice">Klik untuk salin template pesan</div>
+          </div>
+        </div>
+
+        <!-- Campus Guild -->
+        <div class="retro-btn p-4 flex items-center gap-3">
+          <div class="text-2xl">🏛️</div>
+          <div>
+            <div class="text-xs font-bold text-yellow-300">Affiliation Base</div>
+            <div class="text-[9px] text-blue-200 mt-1">UIN Raden Mas Said Surakarta</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Retro Dialogue Box -->
+  <footer class="w-full max-w-4xl retro-box p-3 md:p-4 mt-4 z-10">
+    <div class="flex items-start gap-3">
+      <div class="text-yellow-400 text-lg md:text-xl animate-pulse">▶</div>
+      <div class="flex-1">
+        <div class="text-[10px] text-yellow-300 font-bold mb-1">PROMPT GUIDE:</div>
+        <p id="dialogueText" class="text-[10px] md:text-xs text-gray-200 leading-relaxed">
+          Gunakan tab di atas untuk menjelajahi Status, Quest Log, Inventory Tech Stack, atau masuk ke Arena Pertarungan Data!
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL: DATA CUSTOMIZER -->
+  <div id="editorModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="retro-box w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b-2 border-blue-800 pb-2 mb-4">
+        <h3 class="text-xs md:text-sm font-bold text-yellow-300">⚙️ EDIT DATA PROFIL & CV</h3>
+        <button onclick="closeEditorModal()" class="text-red-400 font-bold text-sm">✕ TUTUP</button>
+      </div>
+
+      <div class="space-y-3 text-[10px] md:text-xs">
+        <div>
+          <label class="block text-blue-200 mb-1">Nama Karakter:</label>
+          <input id="inputName" type="text" class="w-full bg-blue-950 border border-blue-600 p-2 text-white" value="Farras Ijlal Nashir">
+        </div>
+        <div>
+          <label class="block text-blue-200 mb-1">Class / Job Title:</label>
+          <input id="inputClass" type="text" class="w-full bg-blue-950 border border-blue-600 p-2 text-white" value="Data Alchemist & Researcher">
+        </div>
+        <div>
+          <label class="block text-blue-200 mb-1">Guild / Institusi:</label>
+          <input id="inputGuild" type="text" class="w-full bg-blue-950 border border-blue-600 p-2 text-white" value="UIN Raden Mas Said Surakarta">
+        </div>
+        <div>
+          <label class="block text-blue-200 mb-1">Quote Status:</label>
+          <textarea id="inputQuote" class="w-full bg-blue-950 border border-blue-600 p-2 text-white h-20">"Menjelajahi samudra data, mengelompokkan pola tersembunyi, dan meracik wawasan menjadi solusi nyata."</textarea>
+        </div>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button onclick="closeEditorModal()" class="retro-btn px-3 py-1.5 text-[10px] bg-gray-700">Batal</button>
+        <button onclick="saveCustomData()" class="retro-btn px-4 py-1.5 text-[10px] bg-green-700 text-white border-green-300">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client JavaScript & Web Audio Synthesizer -->
+  <script>
+    // Web Audio Synthesizer for 8-bit / 16-bit sound effects (Zero external dependencies)
+    let audioCtx = null;
+    let sfxEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playTone(freq, type, duration, gainVal = 0.1) {
+      if (!sfxEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; // 'square', 'sawtooth', 'triangle'
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // audio fail silent
+      }
+    }
+
+    function sfxBlip() {
+      playTone(587.33, 'square', 0.08, 0.08); // D5
+    }
+
+    function sfxSelect() {
+      playTone(440, 'square', 0.06, 0.08);
+      setTimeout(() => playTone(880, 'square', 0.1, 0.08), 60);
+    }
+
+    function sfxFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C high
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playTone(freq, 'triangle', 0.2, 0.12), idx * 110);
+      });
+    }
+
+    function sfxAttack() {
+      playTone(220, 'sawtooth', 0.15, 0.15);
+      setTimeout(() => playTone(110, 'sawtooth', 0.2, 0.1), 80);
+    }
+
+    function toggleAudio() {
+      sfxEnabled = !sfxEnabled;
+      const soundText = document.getElementById('soundText');
+      const soundIcon = document.getElementById('soundIcon');
+      if (sfxEnabled) {
+        soundText.innerText = 'SFX: ON';
+        soundIcon.innerText = '🔊';
+        sfxSelect();
+      } else {
+        soundText.innerText = 'SFX: OFF';
+        soundIcon.innerText = '🔇';
+      }
+    }
+
+    // Tab Switching
+    function switchTab(tabId) {
+      sfxSelect();
+      const tabs = ['stats', 'quests', 'inventory', 'battle', 'summon'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const panel = document.getElementById('panel-' + t);
+        if (t === tabId) {
+          btn.classList.add('active');
+          panel.classList.remove('hidden');
+        } else {
+          btn.classList.remove('active');
+          panel.classList.add('hidden');
+        }
+      });
+
+      const dialogue = document.getElementById('dialogueText');
+      if (tabId === 'stats') {
+        dialogue.innerText = "Membuka Character Sheet: Menampilkan level keahlian Sains Data, statistika, dan atribut kognitif.";
+      } else if (tabId === 'quests') {
+        dialogue.innerText = "Membuka Quest Log: Termasuk publikasi resmi di ICDSOS / STIS mengenai K-Means Clustering Nakes Jawa Timur!";
+      } else if (tabId === 'inventory') {
+        dialogue.innerText = "Membuka Inventory Relic: Senjata utama meliputi Python, Scikit-Learn, Pandas, dan SQL.";
+      } else if (tabId === 'battle') {
+        dialogue.innerText = "Masuk ke Battle Arena: Uji ketangkasan data Anda melawan kumpulan data kotor dan anomali!";
+      } else if (tabId === 'summon') {
+        dialogue.innerText = "Membuka Summoning Shrine: Terhubung langsung ke profil LinkedIn dan publikasi ilmiah Farras.";
+      }
+    }
+
+    // Inventory Item Inspection
+    function inspectItem(name, desc) {
+      sfxBlip();
+      document.getElementById('itemDetailTitle').innerText = "✨ " + name;
+      document.getElementById('itemDetailDesc').innerText = desc;
+    }
+
+    // Mini Battle Simulation
+    let enemyHp = 100;
+    function battleAction(action) {
+      if (enemyHp <= 0) {
+        enemyHp = 100;
+        document.getElementById('enemyHpBar').style.width = '100%';
+        document.getElementById('enemyHpText').innerText = 'HP: 100%';
+        document.getElementById('enemySprite').innerText = '👾';
+      }
+
+      const log = document.getElementById('battleLog');
+      let damage = 0;
+
+      if (action === 'clean') {
+        sfxAttack();
+        damage = 25;
+        log.innerHTML = "🧹 <span class='text-yellow-300'>Farras menggunakan Data Cleaning!</span> Missing values berhasil dieliminasi! Menghasilkan " + damage + " DMG!";
+      } else if (action === 'cluster') {
+        sfxAttack();
+        damage = 35;
+        log.innerHTML = "🔮 <span class='text-cyan-300'>CRITICAL! Farras melepaskan K-Means Clustering!</span> Pola data terbentuk rapi! Menghasilkan " + damage + " DMG!";
+      } else if (action === 'pipeline') {
+        sfxAttack();
+        damage = 30;
+        log.innerHTML = "⚡ <span class='text-green-300'>Pipeline ETL diaktifkan!</span> Aliran data otomatis menghantam musuh sebesar " + damage + " DMG!";
+      } else if (action === 'insight') {
+        sfxAttack();
+        damage = 40;
+        log.innerHTML = "📊 <span class='text-purple-300'>SUPER EFFECTIVE! Actionable Insight dipresentasikan!</span> Stakeholder terpukau! Menghasilkan " + damage + " DMG!";
+      }
+
+      enemyHp = Math.max(0, enemyHp - damage);
+      document.getElementById('enemyHpBar').style.width = enemyHp + '%';
+      document.getElementById('enemyHpText').innerText = 'HP: ' + enemyHp + '%';
+
+      if (enemyHp === 0) {
+        setTimeout(() => {
+          sfxFanfare();
+          document.getElementById('enemySprite').innerText = '💎';
+          log.innerHTML = "🏆 <span class='text-yellow-300 font-bold'>VICTORY!</span> Dataset kotor berhasil ditransformasikan menjadi wawasan bernilai tinggi! EXP +500!";
+        }, 300);
+      }
+    }
+
+    // Copy Contact
+    function copyContact() {
+      sfxSelect();
+      const text = "Halo Farras Ijlal Nashir, saya melihat portofolio RPG Anda dan tertarik untuk berdiskusi mengenai proyek / peluang kerja sama di bidang Data Science.";
+      navigator.clipboard.writeText(text);
+      document.getElementById('copyNotice').innerText = "✓ Template pesan tersalin ke clipboard!";
+      setTimeout(() => {
+        document.getElementById('copyNotice').innerText = "Klik untuk salin template pesan";
+      }, 3000);
+    }
+
+    // Editor Modal
+    function openEditorModal() {
+      sfxSelect();
+      document.getElementById('editorModal').classList.remove('hidden');
+    }
+
+    function closeEditorModal() {
+      sfxBlip();
+      document.getElementById('editorModal').classList.add('hidden');
+    }
+
+    function saveCustomData() {
+      sfxFanfare();
+      const name = document.getElementById('inputName').value;
+      const jobClass = document.getElementById('inputClass').value;
+      const guild = document.getElementById('inputGuild').value;
+      const quote = document.getElementById('inputQuote').value;
+
+      document.getElementById('charName').innerText = name.toUpperCase();
+      document.getElementById('charClass').innerText = "CLASS: " + jobClass.toUpperCase();
+      document.getElementById('charGuild').innerText = guild.toUpperCase();
+      document.getElementById('statusQuote').innerText = quote;
+
+      closeEditorModal();
+      document.getElementById('dialogueText').innerText = "Data berhasil diperbarui! Profil pahlawan telah disinkronkan.";
+    }
+  </script>
+</body>
+</html>
